@@ -1,5 +1,5 @@
 from functools import wraps
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
 from backend.models.event import (
     create_event,
     get_event_by_access_code,
@@ -13,6 +13,7 @@ from backend.models.question import create_question, get_questions_for_event, ge
 from backend.models.subscriber import add_subscriber, get_subscribers, remove_subscriber
 from backend.models.user import get_user_by_email, get_user_by_id
 from backend.utils.auth import login_required
+from backend.utils.email import send_invite_email
 from backend.utils.sms import send_sms, is_twilio_configured
 
 events_bp = Blueprint("events", __name__)
@@ -202,6 +203,38 @@ def transfer_contact(access_code):
 
     transfer_primary_contact(event["_id"], new_user["_id"])
     return jsonify({"message": f"Primary contact transferred to {new_email}"})
+
+
+@events_bp.route("/<access_code>/invite-email", methods=["POST"])
+@login_required
+@password_required
+def invite_by_email(access_code):
+    event = request.event
+    user = request.current_user
+    if event["primary_contact_id"] != user["_id"]:
+        return jsonify({"error": "Only the primary contact can send invites"}), 403
+
+    data = request.get_json()
+    to_email = data.get("email", "").strip().lower()
+    if not to_email:
+        return jsonify({"error": "Email is required"}), 400
+
+    password = request.headers.get("X-Event-Password", "")
+    frontend_url = current_app.config["FRONTEND_URL"]
+    share_link = f"{frontend_url}/e/{event['access_code']}?p={password}"
+
+    sent = send_invite_email(to_email, event["name"], share_link)
+
+    if sent:
+        return jsonify({"message": f"Invite sent to {to_email}"})
+
+    if current_app.debug:
+        return jsonify({
+            "message": f"SMTP not configured. Share this link with {to_email}",
+            "share_link": share_link,
+        })
+
+    return jsonify({"error": "Email could not be sent. Please share the link manually."}), 503
 
 
 @events_bp.route("/<access_code>/contributions", methods=["GET"])

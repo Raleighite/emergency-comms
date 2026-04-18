@@ -13,6 +13,7 @@ export default function EventAdmin() {
   const [subscriberPhone, setSubscriberPhone] = useState('')
   const [subscriberName, setSubscriberName] = useState('')
   const [subscribers, setSubscribers] = useState([])
+  const [inviteEmail, setInviteEmail] = useState('')
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [posting, setPosting] = useState(false)
@@ -100,6 +101,19 @@ export default function EventAdmin() {
       setTimeout(() => setSuccess(''), 3000)
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to add subscriber')
+    }
+  }
+
+  const handleInviteEmail = async (e) => {
+    e.preventDefault()
+    setError('')
+    try {
+      const res = await api.post(`/events/${accessCode}/invite-email`, { email: inviteEmail })
+      setInviteEmail('')
+      setSuccess(res.data.message)
+      setTimeout(() => setSuccess(''), 3000)
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to send invite')
     }
   }
 
@@ -213,6 +227,30 @@ export default function EventAdmin() {
             ))}
           </div>
         )}
+      </div>
+
+      {/* Invite by Email */}
+      <div className="bg-white rounded-xl border border-slate-200 p-4 mb-6">
+        <h2 className="font-semibold text-slate-800 mb-3">Invite by Email</h2>
+        <p className="text-sm text-slate-500 mb-3">
+          Send an email with the event link so they can view updates.
+        </p>
+        <form onSubmit={handleInviteEmail} className="flex gap-2">
+          <input
+            type="email"
+            value={inviteEmail}
+            onChange={(e) => setInviteEmail(e.target.value)}
+            placeholder="friend@example.com"
+            required
+            className="flex-1 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
+          />
+          <button
+            type="submit"
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition"
+          >
+            Send Invite
+          </button>
+        </form>
       </div>
 
       {/* SMS Subscribers */}

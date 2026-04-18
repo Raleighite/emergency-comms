@@ -41,3 +41,43 @@ def send_magic_link_email(to_email, magic_link):
         server.send_message(msg)
 
     return True
+
+
+def send_invite_email(to_email, event_name, share_link):
+    if current_app.config["TESTING"]:
+        return True
+
+    smtp_host = current_app.config["SMTP_HOST"]
+    smtp_port = current_app.config["SMTP_PORT"]
+    smtp_user = current_app.config["SMTP_USER"]
+    smtp_password = current_app.config["SMTP_PASSWORD"]
+    from_email = current_app.config["SMTP_FROM"]
+
+    if not smtp_user:
+        current_app.logger.warning("SMTP not configured — invite link: %s", share_link)
+        return False
+
+    msg = MIMEMultipart()
+    msg["From"] = from_email
+    msg["To"] = to_email
+    msg["Subject"] = f"Updates for: {event_name}"
+
+    body = f"""
+    <html>
+    <body style="font-family: sans-serif; padding: 20px;">
+        <h2>{event_name}</h2>
+        <p>Someone has invited you to follow updates for <strong>{event_name}</strong>.</p>
+        <p>Click the link below to view the latest updates:</p>
+        <p><a href="{share_link}" style="background: #2563eb; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; display: inline-block;">View Updates</a></p>
+        <p style="color: #666; font-size: 14px;">Bookmark this link so you can check back for new updates.</p>
+    </body>
+    </html>
+    """
+    msg.attach(MIMEText(body, "html"))
+
+    with smtplib.SMTP(smtp_host, smtp_port) as server:
+        server.starttls()
+        server.login(smtp_user, smtp_password)
+        server.send_message(msg)
+
+    return True

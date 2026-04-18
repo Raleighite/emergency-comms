@@ -277,3 +277,39 @@ class TestQuestions:
             "author_name": "Bob", "question": "test?",
         })
         assert res.status_code == 403
+
+
+class TestEmailInvite:
+    def test_send_invite(self, client, mock_db):
+        jwt, _ = _create_authenticated_user(client, mock_db)
+        event = _create_event(client, jwt)
+        res = client.post(f"/api/events/{event['access_code']}/invite-email", json={
+            "email": "friend@example.com",
+        }, headers=_pw_headers(jwt))
+        assert res.status_code == 200
+        assert "message" in res.get_json()
+
+    def test_send_invite_no_email(self, client, mock_db):
+        jwt, _ = _create_authenticated_user(client, mock_db)
+        event = _create_event(client, jwt)
+        res = client.post(f"/api/events/{event['access_code']}/invite-email", json={
+            "email": "",
+        }, headers=_pw_headers(jwt))
+        assert res.status_code == 400
+
+    def test_send_invite_not_primary(self, client, mock_db):
+        jwt1, _ = _create_authenticated_user(client, mock_db, "user1@example.com", "User 1")
+        jwt2, _ = _create_authenticated_user(client, mock_db, "user2@example.com", "User 2")
+        event = _create_event(client, jwt1)
+        res = client.post(f"/api/events/{event['access_code']}/invite-email", json={
+            "email": "friend@example.com",
+        }, headers=_pw_headers(jwt2))
+        assert res.status_code == 403
+
+    def test_send_invite_unauthenticated(self, client, mock_db):
+        jwt, _ = _create_authenticated_user(client, mock_db)
+        event = _create_event(client, jwt)
+        res = client.post(f"/api/events/{event['access_code']}/invite-email", json={
+            "email": "friend@example.com",
+        }, headers=_pw_headers())
+        assert res.status_code == 401

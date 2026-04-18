@@ -1,5 +1,5 @@
 import os
-from flask import Flask
+from flask import Flask, send_from_directory
 from flask_cors import CORS
 from dotenv import load_dotenv
 
@@ -33,5 +33,16 @@ def create_app(testing=False):
     @app.route("/api/health")
     def health():
         return {"status": "ok"}
+
+    # Serve frontend build in production
+    frontend_dist = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend", "dist")
+    if os.path.isdir(frontend_dist):
+        @app.route("/", defaults={"path": ""})
+        @app.route("/<path:path>")
+        def serve_frontend(path):
+            file_path = os.path.join(frontend_dist, path)
+            if path and os.path.isfile(file_path):
+                return send_from_directory(frontend_dist, path)
+            return send_from_directory(frontend_dist, "index.html")
 
     return app
