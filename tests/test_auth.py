@@ -3,10 +3,25 @@ from unittest.mock import patch
 
 
 class TestMagicLink:
-    def test_send_magic_link(self, client):
+    def test_send_magic_link_dev_fallback(self, client, app):
+        """When SMTP is not configured and debug=True, returns the magic link directly."""
+        app.config["TESTING"] = False
+        app.debug = True
         res = client.post("/api/auth/magic-link", json={"email": "test@example.com"})
         assert res.status_code == 200
-        assert "message" in res.get_json()
+        data = res.get_json()
+        assert "magic_link" in data
+        assert "/auth/verify?token=" in data["magic_link"]
+        app.config["TESTING"] = True
+
+    def test_send_magic_link_prod_no_smtp_returns_503(self, client, app):
+        """When SMTP is not configured and debug=False, returns 503."""
+        app.config["TESTING"] = False
+        app.debug = False
+        res = client.post("/api/auth/magic-link", json={"email": "test@example.com"})
+        assert res.status_code == 503
+        assert "error" in res.get_json()
+        app.config["TESTING"] = True
 
     def test_send_magic_link_no_email(self, client):
         res = client.post("/api/auth/magic-link", json={"email": ""})

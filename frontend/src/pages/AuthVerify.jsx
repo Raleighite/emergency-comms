@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import api from '../api'
@@ -8,8 +8,12 @@ export default function AuthVerify() {
   const [error, setError] = useState('')
   const { login } = useAuth()
   const navigate = useNavigate()
+  const verifiedRef = useRef(false)
 
   useEffect(() => {
+    if (verifiedRef.current) return
+    verifiedRef.current = true
+
     const token = searchParams.get('token')
     if (!token) {
       setError('Invalid link')

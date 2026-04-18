@@ -20,9 +20,19 @@ def send_magic_link():
     frontend_url = current_app.config["FRONTEND_URL"]
     magic_link = f"{frontend_url}/auth/verify?token={token}"
 
-    send_magic_link_email(email, magic_link)
+    email_sent = send_magic_link_email(email, magic_link)
 
-    return jsonify({"message": "If that email is valid, a login link has been sent."})
+    if email_sent:
+        return jsonify({"message": "A login link has been sent to your email."})
+
+    # Dev fallback: SMTP not configured, return the link directly
+    if current_app.debug:
+        return jsonify({
+            "message": "SMTP not configured. Use the link below to log in.",
+            "magic_link": magic_link,
+        })
+
+    return jsonify({"error": "Email could not be sent. Please contact support."}), 503
 
 
 @auth_bp.route("/magic-link/verify", methods=["POST"])

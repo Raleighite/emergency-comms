@@ -11,6 +11,7 @@ export default function Login() {
   const [step, setStep] = useState('input')
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
+  const [magicLink, setMagicLink] = useState('')
   const [smsAvailable, setSmsAvailable] = useState(false)
   const { user, login } = useAuth()
   const navigate = useNavigate()
@@ -31,6 +32,9 @@ export default function Login() {
     try {
       const res = await api.post('/auth/magic-link', { email })
       setMessage(res.data.message)
+      if (res.data.magic_link) {
+        setMagicLink(res.data.magic_link)
+      }
       setStep('email-sent')
     } catch (err) {
       setError(err.response?.data?.error || 'Something went wrong')
@@ -137,11 +141,20 @@ export default function Login() {
 
       {step === 'email-sent' && (
         <div className="text-center bg-green-50 border border-green-200 rounded-xl p-6">
-          <h2 className="text-lg font-semibold text-green-800 mb-2">Check your email</h2>
+          <h2 className="text-lg font-semibold text-green-800 mb-2">
+            {magicLink ? 'Dev Mode' : 'Check your email'}
+          </h2>
           <p className="text-green-700 text-sm">
-            We sent a login link to <strong>{email}</strong>. Click the link to log in.
-            The link expires in 15 minutes.
+            {message}
           </p>
+          {magicLink && (
+            <a
+              href={magicLink}
+              className="mt-4 inline-block bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition"
+            >
+              Click here to log in
+            </a>
+          )}
         </div>
       )}
 
