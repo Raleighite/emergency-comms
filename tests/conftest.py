@@ -121,7 +121,9 @@ def patch_db(app, mock_db):
              patch("backend.models.update.get_db", side_effect=fake_get_db), \
              patch("backend.models.magic_token.get_db", side_effect=fake_get_db), \
              patch("backend.models.sms_code.get_db", side_effect=fake_get_db), \
-             patch("backend.models.subscriber.get_db", side_effect=fake_get_db):
+             patch("backend.models.subscriber.get_db", side_effect=fake_get_db), \
+             patch("backend.models.contribution.get_db", side_effect=fake_get_db), \
+             patch("backend.models.question.get_db", side_effect=fake_get_db):
             yield mock_db
 
     db_module._db = original_db

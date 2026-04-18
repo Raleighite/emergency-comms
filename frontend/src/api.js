@@ -26,4 +26,25 @@ api.interceptors.response.use(
   }
 )
 
+export function getEventPassword(accessCode) {
+  return localStorage.getItem(`event_password_${accessCode}`) || ''
+}
+
+export function setEventPassword(accessCode, password) {
+  localStorage.setItem(`event_password_${accessCode}`, password)
+}
+
+export function eventApi(accessCode) {
+  return {
+    get: (url, config = {}) => api.get(url, {
+      ...config,
+      headers: { ...config.headers, 'X-Event-Password': getEventPassword(accessCode) },
+    }),
+    post: (url, data, config = {}) => api.post(url, data, {
+      ...config,
+      headers: { ...config.headers, 'X-Event-Password': getEventPassword(accessCode) },
+    }),
+  }
+}
+
 export default api

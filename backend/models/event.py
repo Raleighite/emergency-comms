@@ -1,6 +1,7 @@
 import secrets
 import string
 from datetime import datetime, timezone
+import bcrypt
 from bson import ObjectId
 from backend.db import get_db
 
@@ -10,14 +11,16 @@ def _generate_code(length=8):
     return "".join(secrets.choice(alphabet) for _ in range(length))
 
 
-def create_event(name, description, primary_contact_id):
+def create_event(name, description, primary_contact_id, password):
     db = get_db()
     if isinstance(primary_contact_id, str):
         primary_contact_id = ObjectId(primary_contact_id)
+    password_hash = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
     event = {
         "name": name,
         "description": description,
         "access_code": _generate_code(),
+        "password_hash": password_hash,
         "primary_contact_id": primary_contact_id,
         "created_by": primary_contact_id,
         "created_at": datetime.now(timezone.utc),
@@ -25,6 +28,10 @@ def create_event(name, description, primary_contact_id):
     result = db.events.insert_one(event)
     event["_id"] = result.inserted_id
     return event
+
+
+def verify_event_password(event, password):
+    return bcrypt.checkpw(password.encode("utf-8"), event["password_hash"].encode("utf-8"))
 
 
 def get_event_by_access_code(access_code):

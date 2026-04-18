@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import api from '../api'
+import { eventApi, getEventPassword } from '../api'
 
 export default function EventAdmin() {
   const { accessCode } = useParams()
   const [event, setEvent] = useState(null)
+  const [questions, setQuestions] = useState(null)
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
   const [transferEmail, setTransferEmail] = useState('')
@@ -19,6 +20,7 @@ export default function EventAdmin() {
   const [showSubscribers, setShowSubscribers] = useState(false)
   const { user } = useAuth()
   const navigate = useNavigate()
+  const api = eventApi(accessCode)
 
   useEffect(() => {
     if (!user) {
@@ -26,6 +28,7 @@ export default function EventAdmin() {
       return
     }
     fetchEvent()
+    fetchQuestions()
   }, [user, accessCode, navigate])
 
   const fetchEvent = () => {
@@ -38,6 +41,12 @@ export default function EventAdmin() {
       })
       .catch(() => navigate('/dashboard'))
       .finally(() => setLoading(false))
+  }
+
+  const fetchQuestions = () => {
+    api.get(`/events/${accessCode}/questions`)
+      .then((res) => setQuestions(res.data))
+      .catch(() => {})
   }
 
   const fetchSubscribers = () => {
@@ -94,14 +103,28 @@ export default function EventAdmin() {
     }
   }
 
+  const handleAnswerQuestion = async (questionId, answer) => {
+    try {
+      await api.post(`/events/${accessCode}/questions/${questionId}/answer`, { answer })
+      fetchQuestions()
+      setSuccess('Question answered')
+      setTimeout(() => setSuccess(''), 3000)
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to answer')
+    }
+  }
+
   const copyShareLink = () => {
-    const link = `${window.location.origin}/e/${accessCode}`
+    const password = getEventPassword(accessCode)
+    const link = `${window.location.origin}/e/${accessCode}?p=${encodeURIComponent(password)}`
     navigator.clipboard.writeText(link)
-    setSuccess('Link copied to clipboard!')
+    setSuccess('Link copied! Password is included in the link.')
     setTimeout(() => setSuccess(''), 3000)
   }
 
   if (loading) return <p className="text-center text-slate-500">Loading...</p>
+
+  const pendingQuestions = questions?.questions.filter(q => q.status === 'pending') || []
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -158,6 +181,20 @@ export default function EventAdmin() {
           </button>
         </form>
       </div>
+
+      {/* Questions to Answer */}
+      {pendingQuestions.length > 0 && (
+        <div className="bg-amber-50 rounded-xl border border-amber-200 p-4 mb-6">
+          <h2 className="font-semibold text-amber-800 mb-3">
+            Questions to Answer ({pendingQuestions.length})
+          </h2>
+          <div className="space-y-3">
+            {pendingQuestions.map((q) => (
+              <QuestionAnswer key={q.id} question={q} onAnswer={handleAnswerQuestion} />
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Recent Updates */}
       <div className="mb-6">
@@ -258,6 +295,44 @@ export default function EventAdmin() {
           </form>
         )}
       </div>
+    </div>
+  )
+}
+
+function QuestionAnswer({ question, onAnswer }) {
+  const [answer, setAnswer] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    if (!answer.trim()) return
+    setSubmitting(true)
+    await onAnswer(question.id, answer.trim())
+    setAnswer('')
+    setSubmitting(false)
+  }
+
+  return (
+    <div className="bg-white rounded-lg border border-amber-200 p-3">
+      <p className="text-sm font-medium text-slate-800">Q: {question.question}</p>
+      <p className="text-xs text-slate-400 mt-1">{question.author_name} &middot; {new Date(question.created_at).toLocaleString()}</p>
+      <form onSubmit={handleSubmit} className="mt-2 flex gap-2">
+        <input
+          type="text"
+          value={answer}
+          onChange={(e) => setAnswer(e.target.value)}
+          placeholder="Type your answer..."
+          required
+          className="flex-1 px-3 py-1.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
+        />
+        <button
+          type="submit"
+          disabled={submitting}
+          className="bg-green-600 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-green-700 transition disabled:opacity-50"
+        >
+          Answer
+        </button>
+      </form>
     </div>
   )
 }
