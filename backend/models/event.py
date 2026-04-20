@@ -11,7 +11,7 @@ def _generate_code(length=8):
     return "".join(secrets.choice(alphabet) for _ in range(length))
 
 
-def create_event(name, description, primary_contact_id, password):
+def create_event(name, description, primary_contact_id, password, template="general"):
     db = get_db()
     if isinstance(primary_contact_id, str):
         primary_contact_id = ObjectId(primary_contact_id)
@@ -21,6 +21,8 @@ def create_event(name, description, primary_contact_id, password):
         "description": description,
         "access_code": _generate_code(),
         "password_hash": password_hash,
+        "template": template,
+        "details": {},
         "primary_contact_id": primary_contact_id,
         "created_by": primary_contact_id,
         "created_at": datetime.now(timezone.utc),
@@ -28,6 +30,16 @@ def create_event(name, description, primary_contact_id, password):
     result = db.events.insert_one(event)
     event["_id"] = result.inserted_id
     return event
+
+
+def update_event_details(event_id, details):
+    db = get_db()
+    if isinstance(event_id, str):
+        event_id = ObjectId(event_id)
+    db.events.update_one(
+        {"_id": event_id},
+        {"$set": {"details": details}},
+    )
 
 
 def verify_event_password(event, password):

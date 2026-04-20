@@ -2,7 +2,6 @@ import { render, screen } from '@testing-library/react'
 import { describe, it, expect, vi } from 'vitest'
 import App from '../App'
 
-// Mock axios
 vi.mock('../api', () => ({
   default: {
     get: vi.fn(() => Promise.resolve({ data: { available: false } })),
@@ -26,10 +25,10 @@ describe('App', () => {
     expect(screen.getByText('Log in')).toBeInTheDocument()
   })
 
-  it('renders the home page content', () => {
+  it('renders the home page hero', () => {
     localStorage.clear()
     render(<App />)
-    expect(screen.getByText('Keep Everyone Updated')).toBeInTheDocument()
+    expect(screen.getByText('One link. Everyone informed.')).toBeInTheDocument()
     expect(screen.getByText('Get Started')).toBeInTheDocument()
   })
 })

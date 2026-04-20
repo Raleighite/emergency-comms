@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import { BrowserRouter } from 'react-router-dom'
 import { describe, it, expect, vi } from 'vitest'
 import Login from '../pages/Login'
@@ -25,7 +25,7 @@ function renderWithRouter(ui) {
 describe('Login', () => {
   it('renders login heading', () => {
     renderWithRouter(<Login />)
-    expect(screen.getByText('Log In')).toBeInTheDocument()
+    expect(screen.getByText('Log in to your account')).toBeInTheDocument()
   })
 
   it('shows email input by default', () => {

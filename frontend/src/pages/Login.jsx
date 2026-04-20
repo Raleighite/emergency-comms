@@ -32,9 +32,7 @@ export default function Login() {
     try {
       const res = await api.post('/auth/magic-link', { email })
       setMessage(res.data.message)
-      if (res.data.magic_link) {
-        setMagicLink(res.data.magic_link)
-      }
+      if (res.data.magic_link) setMagicLink(res.data.magic_link)
       setStep('email-sent')
     } catch (err) {
       setError(err.response?.data?.error || 'Something went wrong')
@@ -66,25 +64,25 @@ export default function Login() {
   }
 
   return (
-    <div className="max-w-md mx-auto">
-      <h1 className="text-2xl font-bold text-slate-900 mb-6 text-center">Log In</h1>
+    <div className="max-w-md mx-auto pt-8">
+      <h1 className="text-2xl font-bold text-slate-900 dark:text-gray-100 mb-8 text-center">Log in to your account</h1>
 
       {step === 'input' && (
-        <>
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-md dark:border dark:border-slate-800 p-6">
           {smsAvailable && (
-            <div className="flex mb-6 bg-slate-100 rounded-lg p-1">
+            <div className="flex mb-6 bg-slate-100 dark:bg-slate-800 rounded-xl p-1">
               <button
                 onClick={() => setMode('email')}
-                className={`flex-1 py-2 text-sm rounded-md font-medium transition ${
-                  mode === 'email' ? 'bg-white shadow text-slate-900' : 'text-slate-500'
+                className={`flex-1 py-2.5 text-sm rounded-lg font-medium transition ${
+                  mode === 'email' ? 'bg-white dark:bg-slate-700 shadow text-slate-900 dark:text-gray-100' : 'text-slate-500 dark:text-gray-400'
                 }`}
               >
                 Email
               </button>
               <button
                 onClick={() => setMode('phone')}
-                className={`flex-1 py-2 text-sm rounded-md font-medium transition ${
-                  mode === 'phone' ? 'bg-white shadow text-slate-900' : 'text-slate-500'
+                className={`flex-1 py-2.5 text-sm rounded-lg font-medium transition ${
+                  mode === 'phone' ? 'bg-white dark:bg-slate-700 shadow text-slate-900 dark:text-gray-100' : 'text-slate-500 dark:text-gray-400'
                 }`}
               >
                 Phone (SMS)
@@ -95,62 +93,65 @@ export default function Login() {
           {mode === 'email' ? (
             <form onSubmit={handleEmailSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Email address</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1.5">Email address</label>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
                   required
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                  className="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-gray-100 placeholder:text-slate-400 dark:placeholder:text-gray-500 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none text-base"
                 />
               </div>
               <button
                 type="submit"
-                className="w-full bg-blue-600 text-white py-2.5 rounded-lg font-medium hover:bg-blue-700 transition"
+                className="w-full bg-amber-500 text-white py-3 rounded-xl font-semibold hover:bg-amber-600 transition text-base"
               >
                 Send Login Link
               </button>
-              <p className="text-xs text-slate-500 text-center">
-                We'll send you a magic link to log in — no password needed.
+              <p className="text-xs text-slate-500 dark:text-gray-500 text-center">
+                We'll send a magic link to your inbox — no password needed.
               </p>
             </form>
           ) : (
             <form onSubmit={handleSmsSend} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Phone number</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1.5">Phone number</label>
                 <input
                   type="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="+1 (555) 123-4567"
                   required
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                  className="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-gray-100 placeholder:text-slate-400 dark:placeholder:text-gray-500 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none text-base"
                 />
               </div>
               <button
                 type="submit"
-                className="w-full bg-blue-600 text-white py-2.5 rounded-lg font-medium hover:bg-blue-700 transition"
+                className="w-full bg-amber-500 text-white py-3 rounded-xl font-semibold hover:bg-amber-600 transition text-base"
               >
                 Send Code
               </button>
             </form>
           )}
-        </>
+        </div>
       )}
 
       {step === 'email-sent' && (
-        <div className="text-center bg-green-50 border border-green-200 rounded-xl p-6">
-          <h2 className="text-lg font-semibold text-green-800 mb-2">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-md dark:border dark:border-slate-800 p-6 text-center">
+          <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-6 h-6 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 19v-8.93a2 2 0 01.89-1.664l7-4.666a2 2 0 012.22 0l7 4.666A2 2 0 0121 10.07V19M3 19a2 2 0 002 2h14a2 2 0 002-2M3 19l6.75-4.5M21 19l-6.75-4.5M3 10l6.75 4.5M21 10l-6.75 4.5m0 0l-1.14.76a2 2 0 01-2.22 0l-1.14-.76" />
+            </svg>
+          </div>
+          <h2 className="text-lg font-bold text-slate-900 dark:text-gray-100 mb-2">
             {magicLink ? 'Dev Mode' : 'Check your email'}
           </h2>
-          <p className="text-green-700 text-sm">
-            {message}
-          </p>
+          <p className="text-slate-600 dark:text-gray-400 text-sm">{message}</p>
           {magicLink && (
             <a
               href={magicLink}
-              className="mt-4 inline-block bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition"
+              className="mt-4 inline-block bg-amber-500 text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-amber-600 transition"
             >
               Click here to log in
             </a>
@@ -159,12 +160,11 @@ export default function Login() {
       )}
 
       {step === 'sms-code' && (
-        <form onSubmit={handleSmsVerify} className="space-y-4">
-          <p className="text-sm text-slate-600 text-center">
-            We sent a code to <strong>{phone}</strong>
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-md dark:border dark:border-slate-800 p-6">
+          <p className="text-sm text-slate-600 dark:text-gray-400 text-center mb-4">
+            Code sent to <strong className="text-slate-900 dark:text-gray-100">{phone}</strong>
           </p>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Verification code</label>
+          <form onSubmit={handleSmsVerify} className="space-y-4">
             <input
               type="text"
               value={code}
@@ -172,20 +172,20 @@ export default function Login() {
               placeholder="123456"
               required
               maxLength={6}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-center text-lg tracking-widest"
+              className="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-gray-100 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none text-center text-xl tracking-[0.3em] font-mono"
             />
-          </div>
-          <button
-            type="submit"
-            className="w-full bg-blue-600 text-white py-2.5 rounded-lg font-medium hover:bg-blue-700 transition"
-          >
-            Verify
-          </button>
-        </form>
+            <button
+              type="submit"
+              className="w-full bg-amber-500 text-white py-3 rounded-xl font-semibold hover:bg-amber-600 transition"
+            >
+              Verify
+            </button>
+          </form>
+        </div>
       )}
 
       {error && (
-        <div className="mt-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+        <div className="mt-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-xl text-sm">
           {error}
         </div>
       )}

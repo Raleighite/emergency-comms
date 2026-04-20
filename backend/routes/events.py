@@ -5,9 +5,11 @@ from backend.models.event import (
     get_event_by_access_code,
     get_events_by_user,
     transfer_primary_contact,
+    update_event_details,
     verify_event_password,
 )
 from backend.models.update import create_update, get_updates_for_event
+from backend.models.attachment import create_attachment, get_attachments_for_event
 from backend.models.contribution import create_contribution, get_contributions_for_event
 from backend.models.question import create_question, get_questions_for_event, get_question_by_id, answer_question
 from backend.models.subscriber import add_subscriber, get_subscribers, remove_subscriber
@@ -47,6 +49,8 @@ def _serialize_event(event, include_updates=False):
         "name": event["name"],
         "description": event.get("description", ""),
         "access_code": event["access_code"],
+        "template": event.get("template", "general"),
+        "details": event.get("details", {}),
         "primary_contact_id": str(event["primary_contact_id"]),
         "created_at": event["created_at"].isoformat(),
     }
@@ -82,8 +86,9 @@ def create_event_route():
         return jsonify({"error": "Event password is required"}), 400
 
     description = data.get("description", "").strip()
+    template = data.get("template", "general")
     user = request.current_user
-    event = create_event(name, description, user["_id"], password)
+    event = create_event(name, description, user["_id"], password, template)
 
     return jsonify(_serialize_event(event)), 201
 
@@ -112,6 +117,23 @@ def verify_password(access_code):
 @password_required
 def get_event(access_code):
     return jsonify(_serialize_event(request.event, include_updates=True))
+
+
+@events_bp.route("/<access_code>/details", methods=["POST"])
+@login_required
+@password_required
+def patch_event_details(access_code):
+    event = request.event
+    user = request.current_user
+    if event["primary_contact_id"] != user["_id"]:
+        return jsonify({"error": "Only the primary contact can update details"}), 403
+
+    data = request.get_json()
+    current_details = event.get("details", {})
+    current_details.update(data)
+    update_event_details(event["_id"], current_details)
+
+    return jsonify({"details": current_details})
 
 
 @events_bp.route("/<access_code>/updates", methods=["POST"])
@@ -339,3 +361,45 @@ def answer_question_route(access_code, question_id):
 
     answer_question(question_id, answer_text)
     return jsonify({"message": "Question answered"})
+
+
+@events_bp.route("/<access_code>/attachments", methods=["GET"])
+@password_required
+def list_attachments(access_code):
+    attachments = get_attachments_for_event(request.event["_id"])
+    return jsonify([{
+        "id": str(a["_id"]),
+        "filename": a["filename"],
+        "content_type": a["content_type"],
+        "data": a["data"],
+        "uploaded_by": a.get("uploaded_by", ""),
+        "created_at": a["created_at"].isoformat(),
+    } for a in attachments])
+
+
+@events_bp.route("/<access_code>/attachments", methods=["POST"])
+@login_required
+@password_required
+def upload_attachment(access_code):
+    event = request.event
+    user = request.current_user
+    if event["primary_contact_id"] != user["_id"]:
+        return jsonify({"error": "Only the primary contact can upload files"}), 403
+
+    data = request.get_json()
+    filename = data.get("filename", "").strip()
+    content_type = data.get("content_type", "").strip()
+    file_data = data.get("data", "")
+    if not filename or not file_data:
+        return jsonify({"error": "Filename and data are required"}), 400
+
+    attachment = create_attachment(
+        event["_id"], filename, content_type, file_data,
+        user.get("name", user.get("email", "")),
+    )
+    return jsonify({
+        "id": str(attachment["_id"]),
+        "filename": attachment["filename"],
+        "content_type": attachment["content_type"],
+        "created_at": attachment["created_at"].isoformat(),
+    }), 201

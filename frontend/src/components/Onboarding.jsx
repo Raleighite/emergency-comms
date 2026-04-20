@@ -22,26 +22,23 @@ export default function Onboarding({ accessCode, onDismiss }) {
   const isLast = step === steps.length - 1
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl max-w-md w-full p-6">
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-7 shadow-xl">
         <div className="flex gap-1.5 mb-6">
           {steps.map((_, i) => (
             <div
               key={i}
-              className={`h-1 flex-1 rounded-full ${i <= step ? 'bg-blue-600' : 'bg-slate-200'}`}
+              className={`h-1.5 flex-1 rounded-full transition-colors ${i <= step ? 'bg-amber-500' : 'bg-slate-200 dark:bg-slate-700'}`}
             />
           ))}
         </div>
 
-        <h2 className="text-xl font-bold text-slate-900 mb-2">{current.title}</h2>
-        <p className="text-slate-600 text-sm leading-relaxed mb-6">{current.body}</p>
+        <h2 className="text-xl font-bold text-slate-900 dark:text-gray-100 mb-2">{current.title}</h2>
+        <p className="text-slate-600 dark:text-gray-400 text-sm leading-relaxed mb-8">{current.body}</p>
 
-        <div className="flex justify-between">
+        <div className="flex justify-between items-center">
           {step > 0 ? (
-            <button
-              onClick={() => setStep(step - 1)}
-              className="text-sm text-slate-500 hover:text-slate-700"
-            >
+            <button onClick={() => setStep(step - 1)} className="text-sm text-slate-500 dark:text-gray-400 hover:text-slate-700 dark:hover:text-gray-200 transition py-2 px-3">
               Back
             </button>
           ) : <div />}
@@ -54,7 +51,7 @@ export default function Onboarding({ accessCode, onDismiss }) {
                 setStep(step + 1)
               }
             }}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition"
+            className="bg-amber-500 text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-amber-600 transition"
           >
             {isLast ? 'Got it' : 'Next'}
           </button>

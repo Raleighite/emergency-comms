@@ -3,7 +3,6 @@ import { BrowserRouter } from 'react-router-dom'
 import { describe, it, expect, vi } from 'vitest'
 import Home from '../pages/Home'
 
-// Mock useAuth
 vi.mock('../context/AuthContext', () => ({
   useAuth: () => ({ user: null, loading: false, login: vi.fn(), logout: vi.fn() }),
 }))
@@ -13,9 +12,9 @@ function renderWithRouter(ui) {
 }
 
 describe('Home', () => {
-  it('renders the tagline', () => {
+  it('renders the hero tagline', () => {
     renderWithRouter(<Home />)
-    expect(screen.getByText('Keep Everyone Updated')).toBeInTheDocument()
+    expect(screen.getByText('One link. Everyone informed.')).toBeInTheDocument()
   })
 
   it('shows Get Started button when logged out', () => {

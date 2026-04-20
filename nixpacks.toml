@@ -8,8 +8,7 @@ cmds = [
 ]
 
 [phases.build]
-cmds = ["echo 'Build complete'"
+cmds = ["echo 'Build complete'"]
 
-]
 [start]
 cmd = "gunicorn --bind 0.0.0.0:$PORT run:app"

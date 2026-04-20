@@ -32,18 +32,24 @@ export default function AuthVerify() {
 
   if (error) {
     return (
-      <div className="max-w-md mx-auto text-center">
-        <div className="bg-red-50 border border-red-200 rounded-xl p-6">
-          <h2 className="text-lg font-semibold text-red-800 mb-2">Link expired</h2>
-          <p className="text-red-700 text-sm">{error}</p>
+      <div className="max-w-md mx-auto pt-16 text-center">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-md dark:border dark:border-slate-800 p-8">
+          <div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-6 h-6 text-red-500 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+          </div>
+          <h2 className="text-lg font-bold text-slate-900 dark:text-gray-100 mb-2">Link expired</h2>
+          <p className="text-sm text-slate-600 dark:text-gray-400">{error}</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="text-center py-16">
-      <p className="text-slate-600">Verifying your login...</p>
+    <div className="text-center pt-20">
+      <div className="inline-block w-8 h-8 border-2 border-slate-300 dark:border-slate-600 border-t-amber-500 rounded-full animate-spin mb-4" />
+      <p className="text-slate-500 dark:text-gray-400">Verifying your login...</p>
     </div>
   )
 }

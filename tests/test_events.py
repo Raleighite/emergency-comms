@@ -313,3 +313,105 @@ class TestEmailInvite:
             "email": "friend@example.com",
         }, headers=_pw_headers())
         assert res.status_code == 401
+
+
+class TestTemplateAndDetails:
+    def test_create_medical_event(self, client, mock_db):
+        jwt, _ = _create_authenticated_user(client, mock_db)
+        res = client.post("/api/events", json={
+            "name": "Dad's Surgery",
+            "password": TEST_PASSWORD,
+            "template": "medical_emergency",
+        }, headers={"Authorization": f"Bearer {jwt}"})
+        assert res.status_code == 201
+        assert res.get_json()["template"] == "medical_emergency"
+        assert res.get_json()["details"] == {}
+
+    def test_update_details(self, client, mock_db):
+        jwt, _ = _create_authenticated_user(client, mock_db)
+        event = _create_event(client, jwt)
+        res = client.post(f"/api/events/{event['access_code']}/details", json={
+            "patient_status": "In surgery",
+            "hospital_name": "General Hospital",
+            "room_number": "302",
+        }, headers=_pw_headers(jwt))
+        assert res.status_code == 200
+        details = res.get_json()["details"]
+        assert details["patient_status"] == "In surgery"
+        assert details["hospital_name"] == "General Hospital"
+        assert details["room_number"] == "302"
+
+    def test_update_details_partial(self, client, mock_db):
+        jwt, _ = _create_authenticated_user(client, mock_db)
+        event = _create_event(client, jwt)
+        # Set initial
+        client.post(f"/api/events/{event['access_code']}/details", json={
+            "patient_status": "In surgery",
+            "room_number": "302",
+        }, headers=_pw_headers(jwt))
+        # Update just room — status should remain
+        res = client.post(f"/api/events/{event['access_code']}/details", json={
+            "room_number": "405",
+        }, headers=_pw_headers(jwt))
+        details = res.get_json()["details"]
+        assert details["room_number"] == "405"
+        assert details["patient_status"] == "In surgery"
+
+    def test_update_details_not_primary(self, client, mock_db):
+        jwt1, _ = _create_authenticated_user(client, mock_db, "user1@example.com", "User 1")
+        jwt2, _ = _create_authenticated_user(client, mock_db, "user2@example.com", "User 2")
+        event = _create_event(client, jwt1)
+        res = client.post(f"/api/events/{event['access_code']}/details", json={
+            "patient_status": "Stable",
+        }, headers=_pw_headers(jwt2))
+        assert res.status_code == 403
+
+    def test_details_visible_in_event(self, client, mock_db):
+        jwt, _ = _create_authenticated_user(client, mock_db)
+        res = client.post("/api/events", json={
+            "name": "Test", "password": TEST_PASSWORD, "template": "medical_emergency",
+        }, headers={"Authorization": f"Bearer {jwt}"})
+        ac = res.get_json()["access_code"]
+        client.post(f"/api/events/{ac}/details", json={
+            "patient_status": "Stable",
+        }, headers=_pw_headers(jwt))
+        event_res = client.get(f"/api/events/{ac}", headers=_pw_headers())
+        assert event_res.get_json()["details"]["patient_status"] == "Stable"
+
+
+class TestAttachments:
+    def test_upload_attachment(self, client, mock_db):
+        jwt, _ = _create_authenticated_user(client, mock_db)
+        event = _create_event(client, jwt)
+        res = client.post(f"/api/events/{event['access_code']}/attachments", json={
+            "filename": "xray.jpg",
+            "content_type": "image/jpeg",
+            "data": "base64encodeddata",
+        }, headers=_pw_headers(jwt))
+        assert res.status_code == 201
+        assert res.get_json()["filename"] == "xray.jpg"
+
+    def test_list_attachments(self, client, mock_db):
+        jwt, _ = _create_authenticated_user(client, mock_db)
+        event = _create_event(client, jwt)
+        client.post(f"/api/events/{event['access_code']}/attachments", json={
+            "filename": "xray.jpg", "content_type": "image/jpeg", "data": "abc",
+        }, headers=_pw_headers(jwt))
+        res = client.get(f"/api/events/{event['access_code']}/attachments", headers=_pw_headers())
+        assert res.status_code == 200
+        assert len(res.get_json()) == 1
+
+    def test_upload_not_primary(self, client, mock_db):
+        jwt1, _ = _create_authenticated_user(client, mock_db, "user1@example.com", "User 1")
+        jwt2, _ = _create_authenticated_user(client, mock_db, "user2@example.com", "User 2")
+        event = _create_event(client, jwt1)
+        res = client.post(f"/api/events/{event['access_code']}/attachments", json={
+            "filename": "test.jpg", "content_type": "image/jpeg", "data": "abc",
+        }, headers=_pw_headers(jwt2))
+        assert res.status_code == 403
+
+    def test_attachments_require_password(self, client, mock_db):
+        jwt, _ = _create_authenticated_user(client, mock_db)
+        event = _create_event(client, jwt)
+        res = client.get(f"/api/events/{event['access_code']}/attachments")
+        assert res.status_code == 403
